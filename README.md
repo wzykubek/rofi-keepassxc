@@ -9,6 +9,7 @@ Package | Description
 :--- | :---
 rofi | application menu, dmenu replacement
 keepassxc | open-source password manager
+zsh | alternative shell and interpreter
 
 ### Install dependencies
 #### Arch Linux
