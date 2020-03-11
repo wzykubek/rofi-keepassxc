@@ -2,12 +2,12 @@
 
 CACHE=$HOME/.cache/rofi-keepassxc/
 mkdir -p $CACHE
-DB="$HOME/Passwords/keepass.kdbx"
 
-rofi -dmenu -i -p "Enter your database password" -l 0 -password | read DBPASS
+DB="$HOME/Passwords/keepass.kdbx"
+DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password)
 
 choose_action() {
-	if [ "$ENTRY" != "" ]; then
+	if [ -n "$ENTRY" ]; then
 		ACTION="$(printf "Clip username\nClip password\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 3)"
 	fi
 
@@ -19,12 +19,12 @@ choose_action() {
 }
 
 ERROR_MSG='Error while reading the database'
-CHECK=$(echo $DBPASS | keepassxc-cli open $DB &> $CACHE/tmp && grep -oh $ERROR_MSG $CACHE/tmp)
+CHECK=$(echo $DBPASS | keepassxc-cli open $DB 1> $CACHE/tmp && grep -oh $ERROR_MSG $CACHE/tmp)
 
 if [ "$CHECK" = "$ERROR_MSG" ]; then
 	rofi -e "$ERROR_MSG"
 else
-	echo $DBPASS | keepassxc-cli ls $DB | grep -v 'Enter' | grep -v '?*/' | sort | rofi -dmenu -i -p "Entry list" -l 30 | read ENTRY
+	echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | rofi -dmenu -i -p "Entry list" -l 30 | read ENTRY
 
 	choose_action
 fi
