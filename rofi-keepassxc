@@ -8,11 +8,12 @@ rofi -dmenu -i -p "Enter your database password" -l 0 -password | read DBPASS
 
 choose_action() {
 	if [ "$ENTRY" != "" ]; then
-		ACTION="$(printf "Clip\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 2)"
+		ACTION="$(printf "Clip username\nClip password\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 3)"
 	fi
 
 	case "$ACTION" in
-		Clip) echo $DBPASS | keepassxc-cli clip $DB $ENTRY;;
+		"Clip username") echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep 'UserName:' | cut -b 11- | xclip -selection clipboard;;
+		"Clip password") echo $DBPASS | keepassxc-cli clip $DB $ENTRY;;
 		Delete) echo $DBPASS | keepassxc-cli rm $DB $ENTRY;;	
 	esac
 }
