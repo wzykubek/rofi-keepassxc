@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-CACHE=$HOME/.cache/passworder/
+CACHE=$HOME/.cache/rofi-keepassxc/
 mkdir -p $CACHE
 DB="$HOME/Passwords/keepass.kdbx"
 
@@ -8,7 +8,7 @@ rofi -dmenu -i -p "Enter your database password" -l 0 -password | read DBPASS
 
 choose_action() {
 	if [ "$ENTRY" != "" ]; then
-		ACTION="$(printf "Clip\nDelete" | rofi -dmenu -i -p 'Action' -l 2)"
+		ACTION="$(printf "Clip\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 2)"
 	fi
 
 	case "$ACTION" in
@@ -27,3 +27,5 @@ else
 
 	choose_action
 fi
+
+rm -r $CACHE/tmp
