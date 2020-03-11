@@ -19,12 +19,13 @@ choose_action() {
 }
 
 ERROR_MSG='Error while reading the database'
-CHECK=$(echo $DBPASS | keepassxc-cli open $DB 1> $CACHE/tmp && grep -oh $ERROR_MSG $CACHE/tmp)
+CHECK=$(echo $DBPASS | keepassxc-cli open $DB &> $CACHE/tmp && grep -oh $ERROR_MSG $CACHE/tmp)
 
 if [ "$CHECK" = "$ERROR_MSG" ]; then
 	rofi -e "$ERROR_MSG"
 else
-	echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | rofi -dmenu -i -p "Entry list" -l 30 | read ENTRY
+	ELEMENTS_NUM=$(if [ "$($ENTRY | wc -l)" > 20 ]; then echo 20; fi)
+	ENTRY=$(echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | rofi -dmenu -i -p "Entry list" -l $ELEMENTS_NUM)
 
 	choose_action
 fi
