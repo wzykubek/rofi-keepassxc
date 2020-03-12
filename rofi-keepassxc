@@ -6,15 +6,84 @@ mkdir -p $CACHE
 DB="$HOME/Passwords/keepass.kdbx"
 DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password)
 
-choose_action() {
-	if [ -n "$ENTRY" ]; then
-		ACTION="$(printf "Clip username\nClip password\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 3)"
+clip_username() {
+	echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep 'UserName:' | cut -b 11- | xclip -selection clipboard
+}
+
+clip_password() {
+	echo $DBPASS | keepassxc-cli clip $DB $ENTRY
+}
+
+show_entry_info() {
+	ELEMENT=$(echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep -Ev 'Enter|?*/' | rofi -dmenu -i -p "Info" -l 10)
+	
+	if [ -n "$ELEMENT" ]; then
+		ACTION=$(printf "Clip\nEdit" | rofi -dmenu -i -p "Choose action" -l 2)
 	fi
 
 	case "$ACTION" in
-		"Clip username") echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep 'UserName:' | cut -b 11- | xclip -selection clipboard;;
-		"Clip password") echo $DBPASS | keepassxc-cli clip $DB $ENTRY;;
-		Delete) echo $DBPASS | keepassxc-cli rm $DB $ENTRY;;	
+		Clip) 
+			if [ -n "$(echo $ELEMENT | grep 'Title: ')" ]; then 
+				echo $ELEMENT | cut -b 8- | xclip -selection clipboard 
+			elif [ -n "$(echo $ELEMENT | grep 'UserName: ')" ]; then
+				clip_username
+			elif [ -n "$(echo $ELEMENT | grep 'Password: ')" ]; then
+				clip_password
+			elif [ -n "$(echo $ELEMENT | grep 'URL: ')" ]; then
+				echo $ELEMENT | cut -b 6- | xclip -selection clipboard
+			elif [ -n "$(echo $ELEMENT | grep 'Notes: ')" ]; then
+				echo $ELEMENT | cut	-b 8- | xclip -selection clipboard
+			fi;;
+		Edit)
+			if [ -n "$(echo $ELEMENT | grep 'Title: ')" ]; then
+				NEW_TITLE=$(rofi -dmenu -i -p "Enter new entry title" -l 0)
+				echo $DBPASS | keepassxc-cli edit -t "$NEW_TITLE" $DB $ENTRY
+			elif [ -n "$(echo $ELEMENT | grep 'UserName: ')" ];then
+				NEW_USERNAME=$(rofi -dmenu -i -p "Enter new entry username" -l 0)
+				echo $DBPASS | keepassxc-cli edit -u "$NEW_USERNAME" $DB $ENTRY
+			elif [ -n "$(echo $ELEMENT | grep 'Password: ')" ]; then
+				ACTION=$(printf "Enter password\nGenerate password" | rofi -dmenu -i -p "Choose action" -l 2)
+				
+				case "$ACTION" in
+					"Enter password") 
+						NEW_PASSWORD=$(rofi -dmenu -i -p "Enter new entry password" -l 0 -password)
+						printf "$DBPASS\n$NEW_PASSWORD" | keepassxc-cli edit -p $DB $ENTRY;;
+					"Generate password")
+						CHAR_NUM=$(rofi -dmenu -i -p "Enter the number of characters of the password" -l 0)
+						NUMBERS=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use numbers?" -l 2)
+						SPECIAL=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use special characters?" -l 2)
+						EXT_ASCII=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use extended ASCII?" -l 2)
+
+						case "$NUMBERS" in Yes) NUMBERS="-n";; *) NUMBERS="";; esac 
+						case "$SPECIAL" in Yes) SPECIAL=" -s";; *) SPECIAL="";; esac 
+						case "$EXT_ASCII" in Yes) EXT_ASCII=" -e";; *) EXT_ASCII="";; esac 
+					
+						echo $DBPASS | keepassxc-cli edit -g -L $(echo "$CHAR_NUM $NUMBERS$SPECIAL$EXT_ASCII") --exclude-similar $DB $ENTRY
+					esac
+
+			elif [ -n "$(echo $ELEMENT | grep 'URL: ')" ]; then
+				NEW_URL=$(rofi -dmenu -i -p "Enter new entry URL" -l 0)
+				echo $DBPASS | keepassxc-cli edit --url "$NEW_URL" $DB $ENTRY
+			elif [ -n "$(echo $ELEMENT | grep 'Notes: ')" ]; then
+				rofi -e "You cannot edit notes for entries now."
+			fi;;
+	esac
+}
+
+delete_entry() {
+	echo $DBPASS | keepassxc-cli rm $DB $ENTRY
+}
+
+choose_action() {
+	if [ -n "$ENTRY" ]; then
+		ACTION="$(printf "Clip username\nClip password\nShow info\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 4)"
+	fi
+
+	case "$ACTION" in
+		"Clip username") clip_username;;
+		"Clip password") clip_password;;
+		"Show info") show_entry_info;;
+		Delete) delete_entry;;
 	esac
 }
 
