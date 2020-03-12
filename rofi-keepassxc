@@ -1,9 +1,11 @@
 #!/usr/bin/env zsh
 
+# Edit this variable to contain path of your keepass database on your drive
+DB="$HOME/Passwords/keepass.kdbx"
+
 CACHE=$HOME/.cache/rofi-keepassxc/
 mkdir -p $CACHE
 
-DB="$HOME/Passwords/keepass.kdbx"
 DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password)
 
 clip_username() {
