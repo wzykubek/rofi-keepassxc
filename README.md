@@ -3,6 +3,23 @@
 ## Description
 Simple keepassxc-cli frontent in rofi menu.
 
+### Features
+Function | keepassxc-cli | rofi-keepassxc
+:--- | :--- | :---
+Use more than one DBs | yes | no (in future yes)
+Add new entry to DB | yes | no (in future yes)
+Groups support | yes | no (in future yes)
+Analyze passwords for weaknesses and problems | yes | no
+Copy password to clipboard | yes | **yes**
+Copy username to clipboard | **no**| **yes**
+Copy URL to clipboard | **no** | **yes**
+Edit entry | yes | **yes**
+Estimate the entropy of a password | yes | no
+Generate random password | yes | **yes**
+List database entries | yes | **yes**
+Remove entries from DB | yes | **yes**
+Show entry informations | yes | **yes**
+
 ## Installation
 ### Dependencies
 Package | Description
