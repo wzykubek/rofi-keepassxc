@@ -1,5 +1,5 @@
 # rofi-keepassxc
-
+![GitHub release](https://img.shields.io/github/v/release/samedamci/rofi-keepassxc?logo=github&style=for-the-badge)
 ## Description
 Simple keepassxc-cli frontent in rofi menu.
 
