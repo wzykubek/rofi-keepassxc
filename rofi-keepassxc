@@ -1,7 +1,19 @@
 #!/usr/bin/env zsh
 
-# Edit this variable to contain path of your keepass database on your drive
 DB="$HOME/Passwords/keepass.kdbx"
+
+case "$1" in
+	-h || --help) 
+		echo "
+usage: rofi-keepassxc [-h] [-d]
+		
+arguments:
+	-h, --help 		  show this help message and exit
+	-d, --database    specify keepass database file path
+		"
+		exit;;
+	-d || --database) DB="$2";;
+esac
 
 CACHE=$HOME/.cache/rofi-keepassxc/
 mkdir -p $CACHE
@@ -89,11 +101,16 @@ choose_action() {
 	esac
 }
 
-ERROR_MSG='Error while reading the database'
-CHECK=$(echo $DBPASS | keepassxc-cli open $DB &> $CACHE/tmp && grep -oh $ERROR_MSG $CACHE/tmp)
+ERROR_PASS='Error while reading the database'
+CHECK_PASS=$(echo $DBPASS | keepassxc-cli open $DB &> $CACHE/tmp && grep -oh $ERROR_PASS $CACHE/tmp)
+ERROR_DB='Failed to open database file'
+CHECK_DB=$(echo $DBPASS | keepassxc-cli open $DB &> $CACHE/tmp && grep -oh $ERROR_DB $CACHE/tmp)
+rm -r $CACHE/tmp
 
-if [ "$CHECK" = "$ERROR_MSG" ]; then
-	rofi -e "$ERROR_MSG"
+if [ "$CHECK_PASS" = "$ERROR_PASS" ]; then
+	rofi -e "$ERROR_PASS password"
+elif [ "$CHECK_DB" = "$ERROR_DB" ]; then
+	rofi -e "$ERROR_DB"
 else
 	ELEMENTS_NUM=$(if [ "$($ENTRY | wc -l)" > 20 ]; then echo 20; fi)
 	ENTRY=$(echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | rofi -dmenu -i -p "Entry list" -l $ELEMENTS_NUM)
@@ -101,4 +118,3 @@ else
 	choose_action
 fi
 
-rm -r $CACHE/tmp

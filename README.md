@@ -52,6 +52,6 @@ git clone https://github.com/samedamci/rofi-keepassxc
 ```
 ### Usage
 * Bind this script (e.g. in sxhkd or i3wm config) to any key or start it `./rofi-keepassxc/rofi-keepassxc`.
-* Set `DB` variable in `rofi-keepassxc` script to contain path of your .kdbx database.
-* Enter your keepassxc database unlocking password.
+* Use `-d` or `--database` argument and specify your keepass database path.
+* Enter your keepass database master password.
 * Select any entry and use option which you want.
