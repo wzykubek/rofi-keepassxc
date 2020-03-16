@@ -1,7 +1,5 @@
 #!/usr/bin/env zsh
 
-DB="$HOME/Passwords/keepass.kdbx"
-
 case "$1" in
 	-h || --help) 
 		echo "
