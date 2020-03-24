@@ -5,6 +5,7 @@ CACHE=$HOME/.cache/rofi-keepassxc/
 mkdir -p $CACHE
 
 DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password -width 500)
+if [ -z "$DBPASS" ]; then exit; fi
 
 clip_username() {
 	echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep 'UserName:' | cut -b 11- | xclip -selection clipboard
@@ -81,8 +82,11 @@ delete_entry() {
 
 add_entry() {
 	NAME=$(rofi -dmenu -i -p "Enter entry name" -l 0)
+	[[ -z "$NAME" ]] && exit
 	USERNAME_=$(rofi -dmenu -i -p "Enter entry username" -l 0)
+	[[ -z "$USERNAME_" ]] && exit
 	ACTION=$(printf "Enter password\nGenerate password" | rofi -dmenu -i -p "Choose action" -l 2)
+	[[ -z "$ACTION" ]] && exit
 
 	case "$ACTION" in
 		"Enter password")
@@ -93,6 +97,7 @@ add_entry() {
 			generate_password
 			echo $DBPASS | keepassxc-cli add $DB "$NAME" -u "$USERNAME_" -g -L $(echo "$CHAR_NUM $NUMBERS$SPECIAL$EXT_ASCII") 
 			;;
+		*) exit
 	esac
 
 }
