@@ -145,6 +145,7 @@ elif [ "$CHECK_DB" = "$ERROR_DB" ]; then
 else
 	ELEMENTS_NUM=$(if [ "$($ENTRY | wc -l)" > 20 ]; then echo 20; fi)
 	ENTRY=$(echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | rofi -dmenu -i -p "Entry list" -l $ELEMENTS_NUM)
+	[[ -z "$(echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | grep $ENTRY)" ]] && exit
 
 	choose_action
 fi
