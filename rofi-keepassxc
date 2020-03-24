@@ -16,7 +16,7 @@ esac
 CACHE=$HOME/.cache/rofi-keepassxc/
 mkdir -p $CACHE
 
-DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password)
+DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password -width 500)
 
 clip_username() {
 	echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep 'UserName:' | cut -b 11- | xclip -selection clipboard
