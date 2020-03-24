@@ -6,7 +6,7 @@ Simple keepassxc-cli frontent in rofi menu.
 ### Features
 Function | keepassxc-cli | rofi-keepassxc
 :--- | :--- | :---
-Use more than one DBs | yes | no (in future yes)
+Use more than one DBs | yes | *WIP*
 Add new entry to DB | yes | no (in future yes)
 Groups support | yes | no (in future yes)
 Analyze passwords for weaknesses and problems | yes | no
