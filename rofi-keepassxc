@@ -19,25 +19,28 @@ generate_password() {
 
 	[ ! "$CHAR_NUM" ] && exit
 
-	NUMBERS=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use numbers?" -l 2)
+	NUMBERS=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use numbers?" -l 2 -width 350)
 
 	case "$NUMBERS" in 
 		Yes) NUMBERS="-n" ;; 
-		*) NUMBERS=""; exit ;; 
+		No) NUMBERS="" ;; 
+		*) exit ;;
 	esac
 	
-	SPECIAL=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use special characters?" -l 2)
+	SPECIAL=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use special characters?" -l 2 -width 400)
 	
 	case "$SPECIAL" in 
 		Yes) SPECIAL=" -s" ;; 
-		*) SPECIAL=""; exit ;; 
+		No) SPECIAL="" ;; 
+		*) exit ;;
 	esac
 	
-	EXT_ASCII=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use extended ASCII?" -l 2)
+	EXT_ASCII=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use extended ASCII?" -l 2 -width 400)
 	
 	case "$EXT_ASCII" in 
 		Yes) EXT_ASCII=" -e" ;; 
-		*) EXT_ASCII=""; exit ;; 
+		No) EXT_ASCII="" ;; 
+		*) exit ;;
 	esac
 }
 
@@ -63,15 +66,15 @@ clip_element() {
 edit_element() {
 	if echo $ELEMENT | grep 'Title: '
 	then
-		NEW_TITLE=$(rofi -dmenu -i -p "Enter new entry title" -l 0)
+		NEW_TITLE=$(rofi -dmenu -i -p "Enter new entry title" -l 0 -width 400)
 		echo $DBPASS | keepassxc-cli edit -t "$NEW_TITLE" $DB $ENTRY
 	elif echo $ELEMENT | grep 'UserName: '
 	then
-		NEW_USERNAME=$(rofi -dmenu -i -p "Enter new entry username" -l 0)
+		NEW_USERNAME=$(rofi -dmenu -i -p "Enter new entry username" -l 0 -width 400)
 		echo $DBPASS | keepassxc-cli edit -u "$NEW_USERNAME" $DB $ENTRY
 	elif echo $ELEMENT | grep 'Password: '
 	then
-		ACTION=$(printf "Enter password\nGenerate password" | rofi -dmenu -i -p "Choose action" -l 2)
+		ACTION=$(printf "Enter password\nGenerate password" | rofi -dmenu -i -p "Choose action" -l 2 width 350)
 
 		case "$ACTION" in
 			"Enter password")
@@ -86,7 +89,7 @@ edit_element() {
 
 	elif echo $ELEMENT | grep 'URL: '
 	then
-		NEW_URL=$(rofi -dmenu -i -p "Enter new entry URL" -l 0)
+		NEW_URL=$(rofi -dmenu -i -p "Enter new entry URL" -l 0 -width 400)
 		echo $DBPASS | keepassxc-cli edit --url "$NEW_URL" $DB $ENTRY
 	elif echo $ELEMENT | grep 'Notes: '
 	then
@@ -95,7 +98,7 @@ edit_element() {
 }
 
 show_entry_info() {
-	ELEMENT=$(echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep -Ev 'Enter|?*/' | rofi -dmenu -i -p "Info" -l 10)
+	ELEMENT=$(echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep -Ev 'Enter|?*/' | rofi -dmenu -i -p "Info" -l 7 -width 350)
 
 	[ "$ELEMENT" ] && ACTION=$(printf "Clip\nEdit" | rofi -dmenu -i -p "Choose action" -l 2)
 
@@ -107,26 +110,35 @@ show_entry_info() {
 
 delete_entry() {
 	echo $DBPASS | keepassxc-cli rm $DB $ENTRY
+	rofi -e "Deleted \"$ENTRY\" entry"
 }
 
 add_entry() {
-	NAME=$(rofi -dmenu -i -p "Enter entry name" -l 0)
-	[ ! "$NAME" ] && exit
+	if [ "$ENTRY" ]; then
+		ACTION=$(printf "Yes\nNo" | rofi -dmenu -i -p "Add \"$ENTRY\" entry?" -l 2 -width 400)
 
-	USERNAME_=$(rofi -dmenu -i -p "Enter entry username" -l 0)
-	[ ! "$USERNAME_" ] && exit
+		case "$ACTION" in
+			Yes) 
+				USERNAME_=$(rofi -dmenu -i -p "Enter entry username" -l 0 -width 400)
+				[ ! "$USERNAME_" ] && exit
 
-	ACTION=$(printf "Enter password\nGenerate password" | rofi -dmenu -i -p "Choose action" -l 2)
-	[ ! "$ACTION" ] && exit
+				ACTION=$(printf "Enter password\nGenerate password" | rofi -dmenu -i -p "Choose action" -l 2 -width 300)
+				[ ! "$ACTION" ] && exit
+				;;
+			*) exit ;; 
+		esac
+
+	else exit; fi
 
 	case "$ACTION" in
 		"Enter password")
-			PASSWORD=$(rofi -dmenu -i -p "Enter new entry password" -l 0 -password)
-			printf "$DBPASS\n$PASSWORD" | keepassxc-cli add $DB "$NAME" -u "$USERNAME_" -p
+			PASSWORD=$(rofi -dmenu -i -p "Enter new entry password" -l 0 -password -width 400)
+			printf "$DBPASS\n$PASSWORD" | keepassxc-cli add $DB "$ENTRY" -u "$USERNAME_" -p
 			;;
 		"Generate password")
 			generate_password
-			echo $DBPASS | keepassxc-cli add $DB "$NAME" -u "$USERNAME_" -g -L $(echo "$CHAR_NUM $NUMBERS$SPECIAL$EXT_ASCII")
+			echo $DBPASS | keepassxc-cli add $DB "$ENTRY" -u "$USERNAME_" -g -L $(echo "$CHAR_NUM $NUMBERS$SPECIAL$EXT_ASCII")
+			rofi -e "Successfully added \"$ENTRY\" entry"
 			;;
 		*) exit
 	esac
@@ -134,13 +146,13 @@ add_entry() {
 }
 
 choose_action() {
-	[ "$ENTRY" ] && ACTION="$(printf "Clip username\nClip password\nShow info\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 4)"
+	[ "$ENTRY" ] && ACTION="$(printf "Clip username\nClip password\nShow info\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 4 -width 400)"
 
 	case "$ACTION" in
-		"Clip username") clip_username;;
-		"Clip password") clip_password;;
-		"Show info") show_entry_info;;
-		Delete) delete_entry;;
+		"Clip username") clip_username ;;
+		"Clip password") clip_password ;;
+		"Show info") show_entry_info ;;
+		Delete) delete_entry ;;
 	esac
 }
 
@@ -152,20 +164,15 @@ case "$1" in
 		arguments:
 		-h, --help 		  show this help message and exit
 		-d, --database    specify keepass database file path
-
-		add 			  add new entry to database [devel]
 		"
 		exit;;
-	-d || --database) DB="$2";;
+	-d || --database) DB="$2" ;;
 esac
-
-[ "$3" = "add" ] && add_entry
 
 ERROR_PASS='Error while reading the database'
 CHECK_PASS=$(echo $DBPASS | keepassxc-cli open $DB &> $CACHE/tmp && grep -oh $ERROR_PASS $CACHE/tmp)
 ERROR_DB='Failed to open database file'
 CHECK_DB=$(echo $DBPASS | keepassxc-cli open $DB &> $CACHE/tmp && grep -oh $ERROR_DB $CACHE/tmp)
-rm -r $CACHE/tmp
 
 if [ "$CHECK_PASS" = "$ERROR_PASS" ]; then
 	rofi -e "$ERROR_PASS password"
@@ -173,8 +180,14 @@ elif [ "$CHECK_DB" = "$ERROR_DB" ]; then
 	rofi -e "$ERROR_DB"
 else
 	ELEMENTS_NUM=$(if [ "$($ENTRY | wc -l)" > 20 ]; then echo 20; fi)
-	ENTRY=$(echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | rofi -dmenu -i -p "Entry list" -l $ELEMENTS_NUM)
-	[ ! echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | grep $ENTRY ] && exit
-
-	choose_action
+	ENTRY=$(echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort | rofi -dmenu -i -p "Entry list" -l $ELEMENTS_NUM -width 350)
+	
+	echo $DBPASS | keepassxc-cli ls $DB | grep -Ev 'Enter|?*/' | sort > $CACHE/tmp
+	
+	if ! grep -q $ENTRY $CACHE/tmp; then 
+	add_entry || exit
+	else choose_action || exit
+	fi
 fi
+
+rm -r $CACHE/tmp
