@@ -20,40 +20,4 @@ List database entries | yes | **yes**
 Remove entries from DB | yes | **yes**
 Show entry informations | yes | **yes**
 
-# Installation
-## [From AUR](https://aur.archlinux.org/packages/rofi-keepassxc/)
-## From source
-### Dependencies
-Package | Description
-:--- | :---
-rofi | application menu, dmenu replacement
-keepassxc | open-source password manager
-zsh | alternative shell and interpreter
-xclip | CLI to the X11 clipboard
-
-### Install dependencies
-#### Arch Linux
-```
-sudo pacman -S --needed rofi keepassxc zsh xclip
-```
-#### Debian/Ubuntu
-```
-sudo apt install rofi keepassxc zsh xclip
-```
-#### Fedora
-```
-sudo dnf install rofi keepassxc zsh xclip
-```
-#### openSUSE
-```
-sudo zypper in rofi keepassxc zsh xclip
-```
-### Clone repository
-```
-git clone https://github.com/samedamci/rofi-keepassxc
-```
-### Usage
-* Bind this script (e.g. in sxhkd or i3wm config) to any key or start it `./rofi-keepassxc/rofi-keepassxc`.
-* Use `-d` or `--database` argument and specify your keepass database path.
-* Enter your keepass database master password.
-* Select any entry and use option which you want.
+## [Wiki](https://github.com/samedamci/rofi-keepassxc/wiki)
