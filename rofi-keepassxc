@@ -1,11 +1,5 @@
 #!/usr/bin/env zsh
 
-CACHE=$HOME/.cache/rofi-keepassxc/
-mkdir -p $CACHE
-
-DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password -width 500)
-[ ! "$DBPASS" ] && exit
-
 clip_username() {
 	echo $DBPASS | keepassxc-cli show $DB $ENTRY | grep 'UserName:' | cut -b 11- | xclip -selection clipboard
 }
@@ -159,15 +153,22 @@ choose_action() {
 case "$1" in
 	-h || --help)
 		echo "
-		usage: rofi-keepassxc [-h] [-d]
+	usage: rofi-keepassxc [-h] [-d]
 
-		arguments:
-		-h, --help 		  show this help message and exit
-		-d, --database    specify keepass database file path
+	arguments:
+	-h, --help 		  		  show this help message and exit
+	-d, --database [file]     specify keepass database file path
 		"
 		exit;;
 	-d || --database) DB="$2" ;;
+	*) echo "[E] Invalid argument."; exit ;;
 esac
+
+CACHE=$HOME/.cache/rofi-keepassxc/
+mkdir -p $CACHE
+
+DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password -width 500)
+[ ! "$DBPASS" ] && exit
 
 ERROR_PASS='Error while reading the database'
 CHECK_PASS=$(echo $DBPASS | keepassxc-cli open $DB &> $CACHE/tmp && grep -oh $ERROR_PASS $CACHE/tmp)
