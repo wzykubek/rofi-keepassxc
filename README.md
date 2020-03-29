@@ -20,7 +20,9 @@ List database entries | yes | **yes**
 Remove entries from DB | yes | **yes**
 Show entry informations | yes | **yes**
 
-## Installation
+# Installation
+## [From AUR](https://aur.archlinux.org/packages/rofi-keepassxc/)
+## From source
 ### Dependencies
 Package | Description
 :--- | :---
