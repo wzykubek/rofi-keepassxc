@@ -5,7 +5,7 @@ clip_username() {
 }
 
 clip_password() {
-	echo $DBPASS | keepassxc-cli clip $DB $ENTRY
+	echo $DBPASS | keepassxc-cli clip $DB $ENTRY $TIMEOUT
 }
 
 generate_password() {
@@ -150,20 +150,26 @@ choose_action() {
 	esac
 }
 
-case "$1" in
-	-h || --help)
-		echo "
-	usage: rofi-keepassxc [-h] [-d]
+while [ -n "$1" ]; do
+    case "$1" in
+        -h || --help)
+            echo "
+        usage: rofi-keepassxc [-h] [-d]
 
-	arguments:
-	-h, --help 		  		  show this help message and exit
-	-d, --database [file]     specify keepass database file path
-		"
-		exit;;
-	-d || --database) DB="$2" ;;
-	*) echo "[E] Invalid argument."; exit ;;
-esac
+        arguments:
+        -h, --help                show this help message and exit
+        -d, --database [file]     specify keepass database file path
+        -t, --timout [value]      specify a timout in second for clipped password; default to 15 seconds
 
+            "
+            exit;;
+        -d || --database) DB="$2"; shift; shift;;
+        -t || --timeout) TIMEOUT="$2"; shift; shift;;
+        *) echo "[E] Invalid argument."; exit ;;
+    esac
+done
+
+[[ ! "$TIMEOUT" ]] && TIMEOUT=15  # default TIMEOUT value if not specified
 CACHE=$HOME/.cache/rofi-keepassxc/
 mkdir -p $CACHE
 
