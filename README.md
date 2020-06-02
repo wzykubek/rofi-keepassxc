@@ -20,4 +20,17 @@ List database entries | yes | **yes**
 Remove entries from DB | yes | **yes**
 Show entry informations | yes | **yes**
 
-## [Installation guide](https://github.com/samedamci/rofi-keepassxc/wiki/Installation)
+### Installation guide
+## Arch Linux
+Install package from [AUR](https://aur.archlinux.org/packages/rofi-keepassxc/).
+```shell
+yay -S rofi-keepassxc
+```
+Or version from git master branch `rofi-keepassxc-git`.
+## From source
+Clone this repo.
+```shell
+git clone https://github.com/samedamci/rofi-keepassxc
+cd rofi-keepassxc
+```
+Add script to your PATH or use relative path to run `./rofi-keepassxc`.
