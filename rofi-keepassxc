@@ -1,200 +1,201 @@
 #!/bin/sh
 
-clip_username() {
-	echo "$DBPASS" | keepassxc-cli show "$DB" "$ENTRY" | grep 'UserName:' | cut -b 11- | xclip -selection clipboard
-}
+m() { rofi -dmenu -i "$@" ;}
 
-clip_password() {
-	echo "$DBPASS" | keepassxc-cli clip "$DB" "$ENTRY" "$TIMEOUT"
+clip_username() {
+  echo "$dbpass" | keepassxc-cli show "$db" "$entry" | grep 'UserName:' | \
+    cut -b 11- | xclip -sel clip
 }
+clip_password() { echo "$dbpass" | keepassxc-cli clip "$db" "$entry" "$timeout" ;}
+clip_title() { echo "$element" | cut -b 8- | xclip -sel clip ;}
+clip_url() { echo "$element" | cut -b 6- | xclip -sel clip ;}
+clip_notes() { echo "$element" | cut -b 8- | xclip -sel clip ;}
 
 generate_password() {
-	CHAR_NUM=$(rofi -dmenu -i -p "Number of password characters" -l 0 -width 400)
+  char_num=$(m -p "Number of password characters" -l 0 -width 400)
+  [ ! "$char_num" ] && exit
 
-	[ ! "$CHAR_NUM" ] && exit
+  numbers=$(printf "Yes\nNo" | m -p "Use numbers?" -l 2 -width 350)
 
-	NUMBERS=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use numbers?" -l 2 -width 350)
+  case "$numbers" in
+    Yes) numbers="-n";;
+    No) numbers="";;
+    *) exit;;
+  esac
 
-	case "$NUMBERS" in
-		Yes) NUMBERS="-n" ;;
-		No) NUMBERS="" ;;
-		*) exit ;;
-	esac
+  special=$(printf "Yes\nNo" | m -p "Use special characters?" -l 2 -width 400)
 
-	SPECIAL=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use special characters?" -l 2 -width 400)
+  case "$special" in
+    Yes) special=" -s";;
+    No) special="";;
+    *) exit;;
+  esac
 
-	case "$SPECIAL" in
-		Yes) SPECIAL=" -s" ;;
-		No) SPECIAL="" ;;
-		*) exit ;;
-	esac
+  ext_ascii=$(printf "Yes\nNo" | m -p "Use extended ASCII?" -l 2 -width 400)
 
-	EXT_ASCII=$(printf "Yes\nNo" | rofi -dmenu -i -p "Use extended ASCII?" -l 2 -width 400)
-
-	case "$EXT_ASCII" in
-		Yes) EXT_ASCII=" -e" ;;
-		No) EXT_ASCII="" ;;
-		*) exit ;;
-	esac
+  case "$ext_ascii" in
+    Yes) ext_ascii=" -e";;
+    No) ext_ascii="";;
+    *) exit;;
+  esac
 }
 
 clip_element() {
-	if echo "$ELEMENT" | grep 'Title: '
-	then
-		echo "$ELEMENT" | cut -b 8- | xclip -selection clipboard
-	elif echo "$ELEMENT" | grep 'UserName: '
-	then
-		clip_username
-	elif echo "$ELEMENT" | grep 'Password: '
-	then
-		clip_password
-	elif echo "$ELEMENT" | grep 'URL: '
-	then
-		echo "$ELEMENT" | cut -b 6- | xclip -selection clipboard
-	elif echo "$ELEMENT" | grep 'Notes: '
-	then
-		echo "$ELEMENT" | cut	-b 8- | xclip -selection clipboard
-	fi
+  if echo "$element" | grep -q 'Title: '; then
+    clip_title
+  elif echo "$element" | grep -q 'UserName: '; then
+    clip_username
+  elif echo "$element" | grep -q 'Password: '; then
+    clip_password
+  elif echo "$element" | grep -q 'URL: '; then
+    clip_url
+  elif echo "$element" | grep -q 'Notes: '; then
+    clip_notes
+  fi
 }
 
 edit_element() {
-	if echo "$ELEMENT" | grep 'Title: '
-	then
-		NEW_TITLE=$(rofi -dmenu -i -p "Enter new entry title" -l 0 -width 400)
-		echo "$DBPASS" | keepassxc-cli edit -t "$NEW_TITLE" "$DB" "$ENTRY"
-	elif echo "$ELEMENT" | grep 'UserName: '
-	then
-		NEW_USERNAME=$(rofi -dmenu -i -p "Enter new entry username" -l 0 -width 400)
-		echo "$DBPASS" | keepassxc-cli edit -u "$NEW_USERNAME" "$DB" "$ENTRY"
-	elif echo "$ELEMENT" | grep 'Password: '
-	then
-		ACTION=$(printf "Enter password\nGenerate password" | rofi -dmenu -i -p "Choose action" -l 2 width 350)
+  if echo "$element" | grep 'Title: '
+  then
+    new_title=$(m -p "Enter new entry title" -l 0 -width 400)
+    echo "$dbpass" | keepassxc-cli edit -t "$new_title" "$db" "$entry"
+  elif echo "$element" | grep 'UserName: '
+  then
+    new_username=$(m -p "Enter new entry username" -l 0 -width 400)
+    echo "$dbpass" | keepassxc-cli edit -u "$new_username" "$db" "$entry"
+  elif echo "$element" | grep 'Password: '
+  then
+    action=$(printf "Enter password\nGenerate password" | m -p "Choose action" -l 2 width 350)
 
-		case "$ACTION" in
-			"Enter password")
-				NEW_PASSWORD=$(rofi -dmenu -i -p "Enter new entry password" -l 0 -password)
-				printf "%s" "$DBPASS\n$NEW_PASSWORD" | keepassxc-cli edit -p "$DB" "$ENTRY"
-				;;
-			"Generate password")
-				generate_password
-				echo "$DBPASS" | keepassxc-cli edit -g -L "$(echo "$CHAR_NUM $NUMBERS$SPECIAL$EXT_ASCII")" --exclude-similar "$DB" "$ENTRY"
-				;;
-		esac
+    case "$action" in
+      "Enter password")
+        new_password=$(m -p "Enter new entry password" -l 0 -password)
+        printf "%s" "$dbpass\n$new_password" | keepassxc-cli edit -p "$db" "$entry"
+        ;;
+      "Generate password")
+        generate_password
+        echo "$dbpass" | keepassxc-cli edit -g -L "$(echo "$char_num $numbers$special$ext_ascii")" \
+          --exclude-similar "$db" "$entry"
+        ;;
+    esac
 
-	elif echo "$ELEMENT" | grep 'URL: '
-	then
-		NEW_URL=$(rofi -dmenu -i -p "Enter new entry URL" -l 0 -width 400)
-		echo "$DBPASS" | keepassxc-cli edit --url "$NEW_URL" "$DB" "$ENTRY"
-	elif echo "$ELEMENT" | grep 'Notes: '
-	then
-		rofi -e "You cannot edit notes for entries now."
-	fi
+  elif echo "$element" | grep 'URL: '
+  then
+    NEW_URL=$(m -p "Enter new entry URL" -l 0 -width 400)
+    echo "$dbpass" | keepassxc-cli edit --url "$NEW_URL" "$db" "$entry"
+  elif echo "$element" | grep 'Notes: '
+  then
+    rofi -e "You cannot edit notes for entries now."
+  fi
 }
 
 show_entry_info() {
-	ELEMENT=$(echo "$DBPASS" | keepassxc-cli show "$DB" "$ENTRY" | grep -Ev 'Enter|?*/' | rofi -dmenu -i -p "Info" -l 7 -width 350)
+  element=$(echo "$dbpass" | keepassxc-cli show "$db" "$entry" | grep -Ev 'Enter|?*/' | m -p "Info" -l 7 -width 350)
 
-	[ "$ELEMENT" ] && ACTION=$(printf "Clip\nEdit" | rofi -dmenu -i -p "Choose action" -l 2)
+  [ "$element" ] && action=$(printf "Clip\nEdit" | m -p "Choose action" -l 2)
 
-	case "$ACTION" in
-		Clip) clip_element ;;
-		Edit) edit_element ;;
-	esac
+  case "$action" in
+    Clip) clip_element ;;
+    Edit) edit_element ;;
+  esac
 }
 
 delete_entry() {
-	echo "$DBPASS" | keepassxc-cli rm "$DB" "$ENTRY"
-	rofi -e "Deleted \"$ENTRY\" entry"
+  echo "$dbpass" | keepassxc-cli rm "$db" "$entry"
+  rofi -e "Deleted \"$entry\" entry"
 }
 
 add_entry() {
-	if [ "$ENTRY" ]; then
-		ACTION=$(printf "Yes\nNo" | rofi -dmenu -i -p "Add \"$ENTRY\" entry?" -l 2 -width 400)
+  if [ "$entry" ]; then
+    action=$(printf "Yes\nNo" | m -p "Add \"$entry\" entry?" -l 2 -width 400)
 
-		case "$ACTION" in
-			Yes)
-				USERNAME_=$(rofi -dmenu -i -p "Enter entry username" -l 0 -width 400)
-				[ ! "$USERNAME_" ] && exit
+    case "$action" in
+      Yes)
+        username=$(m -p "Enter entry username" -l 0 -width 400)
+        [ ! "$username" ] && exit
 
-				ACTION=$(printf "Enter password\nGenerate password" | rofi -dmenu -i -p "Choose action" -l 2 -width 300)
-				[ ! "$ACTION" ] && exit
-				;;
-			*) exit ;;
-		esac
+        action=$(printf "Enter password\nGenerate password" | m -p "Choose action" -l 2 -width 300)
+        [ ! "$action" ] && exit
+        ;;
+      *) exit;;
+    esac
 
-	else exit; fi
+  else exit; fi
 
-	case "$ACTION" in
-		"Enter password")
-			PASSWORD=$(rofi -dmenu -i -p "Enter new entry password" -l 0 -password -width 400)
-			printf "%s" "$DBPASS\n$PASSWORD" | keepassxc-cli add "$DB" "$ENTRY" -u "$USERNAME_" -p
-			;;
-		"Generate password")
-			generate_password
-			echo "$DBPASS" | keepassxc-cli add "$DB" "$ENTRY" -u "$USERNAME_" -g -L "$(echo "$CHAR_NUM $NUMBERS$SPECIAL$EXT_ASCII")"
-			rofi -e "Successfully added \"$ENTRY\" entry"
-			;;
-		*) exit
-	esac
+  case "$action" in
+    "Enter password")
+      password=$(m -p "Enter new entry password" -l 0 -password -width 400)
+      printf "%s" "$dbpass\n$password" | keepassxc-cli add "$db" "$entry" -u "$username" -p
+      ;;
+    "Generate password")
+      generate_password
+      echo "$dbpass" | keepassxc-cli add "$db" "$entry" -u "$username" -g -L \
+        "$(echo "$char_num $numbers$special$ext_ascii")"
+      rofi -e "Successfully added \"$entry\" entry"
+      ;;
+    *) exit
+  esac
 
 }
 
 choose_action() {
-	[ "$ENTRY" ] && ACTION="$(printf "Clip username\nClip password\nShow info\nDelete" | rofi -dmenu -i -p "Choose action for \"$ENTRY\" entry" -l 4 -width 400)"
+  [ "$entry" ] && action="$(printf "Clip username\nClip password\nShow info\nDelete" | \
+    m -p "Choose action for \"$entry\" entry" -l 4 -width 400)"
 
-	case "$ACTION" in
-		"Clip username") clip_username ;;
-		"Clip password") clip_password ;;
-		"Show info") show_entry_info ;;
-		Delete) delete_entry ;;
-	esac
+  case "$action" in
+    "Clip username") clip_username ;;
+    "Clip password") clip_password ;;
+    "Show info") show_entry_info ;;
+    Delete) delete_entry ;;
+  esac
 }
 
-while [ -n "$1" ]; do
-    case "$1" in
-        -h | --help)
-            echo "
-        usage: rofi-keepassxc [-h] [-d]
+print_help() {
+  printf "usage: rofi-keepassxc [-h] [-d]
 
-        arguments:
-        -h, --help                show this help message and exit
-        -d, --database [file]     specify keepass database file path
-        -t, --timout [value]      specify a timout in second for clipped password; default to 15 seconds
+  arguments:
+  -h, --help                show this help message and exit
+  -d, --database [file]     specify keepass database file path
+  -t, --timeout [value]      specify a timout in second for clipped password; default to 15 seconds\n\n"
+}
 
-            "
-            exit;;
-        -d | --database) DB="$2"; shift; shift;;
-        -t | --timeout) TIMEOUT="$2"; shift; shift;;
-        *) echo "[E] Invalid argument."; exit ;;
-    esac
+[ ! "$1" ] && { print_help; exit ;}
+while [ "$1" ]; do
+  case "$1" in
+    -h | --help) print_help; exit;;
+    -d | --database) db="$2"; shift; shift;;
+    -t | --timeout) timeout="$2"; shift; shift;;
+    *) echo "[E] Invalid argument."; exit 1;;
+  esac
 done
 
-[ ! "$TIMEOUT" ] && TIMEOUT=15  # default TIMEOUT value if not specified
+[ ! "$timeout" ] && timeout=15
 CACHE=$HOME/.cache/rofi-keepassxc/
 mkdir -p "$CACHE"
 
-DBPASS=$(rofi -dmenu -i -p "Enter your database password" -l 0 -password -width 500)
-[ ! "$DBPASS" ] && exit
+dbpass=$(m -p "Enter your database password" -l 0 -password -width 500)
+[ ! "$dbpass" ] && exit
 
-ERROR_PASS='Error while reading the database'
-CHECK_PASS=$(echo "$DBPASS" | keepassxc-cli open "$DB" >"$CACHE/tmp" 2>&1 && grep -oh "$ERROR_PASS" "$CACHE/tmp")
-ERROR_DB='Failed to open database file'
-CHECK_DB=$(echo "$DBPASS" | keepassxc-cli open "$DB" >"$CACHE/tmp" 2>&1 && grep -oh "$ERROR_DB" "$CACHE/tmp")
+error_pass='Error while reading the database'
+check_pass=$(echo "$dbpass" | keepassxc-cli open "$db" >"$CACHE/tmp" 2>&1 && grep -oh "$error_pass" "$CACHE/tmp")
+error_db='Failed to open database file'
+check_db=$(echo "$dbpass" | keepassxc-cli open "$db" >"$CACHE/tmp" 2>&1 && grep -oh "$error_db" "$CACHE/tmp")
 
-if [ "$CHECK_PASS" = "$ERROR_PASS" ]; then
-	rofi -e "$ERROR_PASS password"
-elif [ "$CHECK_DB" = "$ERROR_DB" ]; then
-	rofi -e "$ERROR_DB"
+if [ "$check_pass" = "$error_pass" ]; then
+  rofi -e "$error_pass password"
+elif [ "$check_db" = "$error_db" ]; then
+  rofi -e "$error_db"
 else
-  echo "$DBPASS" | keepassxc-cli ls "$DB" | grep -Ev 'Enter|?*/' | sort >"$CACHE/tmp"
-	ELEMENTS_NUM=$([ "$(wc -l < "$CACHE/tmp")" -gt 20 ] && echo 20)
+  echo "$dbpass" | keepassxc-cli ls "$db" | grep -Ev 'Enter|?*/' | sort >"$CACHE/tmp"
+  elements_num=$([ "$(wc -l < "$CACHE/tmp")" -gt 20 ] && echo 20)
 
-	ENTRY=$(cat "$CACHE/tmp" | rofi -dmenu -i -p "Entry list" -l "$ELEMENTS_NUM" -width 350)
+  entry=$(m -p "Entry list" -l "$elements_num" -width 350 < "$CACHE/tmp")
 
-	if ! grep -q "$ENTRY" "$CACHE/tmp"; then
-	add_entry || exit
-	else choose_action || exit
-	fi
+  if ! grep -q "$entry" "$CACHE/tmp"; then
+    add_entry || exit 1
+  else
+    choose_action || exit 1
+  fi
 fi
 
-# rm -r "$CACHE/tmp"
+rm -r "$CACHE/tmp"
